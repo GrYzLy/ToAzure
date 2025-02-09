@@ -44,5 +44,5 @@ steps:
     azureSubscription: 'Free Trial(3f6db5d9-fa18-4e79-9225-549d02c19a5b)'
     appType: 'webApp'
     appName: 'jan2024auth'
-    package: '$(System.DefaultWorkingDirectory)/**/*.zip'
+    package: '$(Build.ArtifactStagingDirectory)/**/*.zip'
     deploymentMethod: auto
