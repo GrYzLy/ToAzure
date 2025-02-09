@@ -28,13 +28,11 @@ steps:
     configuration: '$(buildConfiguration)'
 
 # ASP.NET Core (.NET Framework)
-- task: AzureRmWebAppDeployment@4
+
+- task: AzureWebApp@1
   inputs:
-    ConnectionType: 'AzureRM'
     azureSubscription: 'Free Trial(3f6db5d9-fa18-4e79-9225-549d02c19a5b)'
     appType: 'webApp'
-    WebAppName: 'jan2024auth'
-    packageForLinux: '$(System.DefaultWorkingDirectory)/**/*.zip'
-# Build and test ASP.NET Core projects targeting the full .NET Framework.
-# Add steps that publish symbols, save build artifacts, and more:
-# https://docs.microsoft.com/azure/devops/pipelines/languages/dotnet-core
+    appName: 'jan2024auth'
+    package: '$(System.DefaultWorkingDirectory)/**/*.zip'
+    deploymentMethod: 'zipDeploy'
