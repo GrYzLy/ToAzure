@@ -1,0 +1,46 @@
+trigger:
+- main
+
+pool: my-personal-computer
+
+variables:
+  solution: '**/*.sln'
+  buildPlatform: 'Any CPU'
+  buildConfiguration: 'Release'
+
+steps:
+- task: NuGetToolInstaller@1
+
+- task: NuGetCommand@2
+  inputs:
+    restoreSolution: '$(solution)'
+
+- task: VSBuild@1
+  inputs:
+    solution: '$(solution)'
+    msbuildArgs: '/p:DeployOnBuild=true /p:WebPublishMethod=Package /p:PackageAsSingleFile=true /p:SkipInvalidConfigurations=true /p:DesktopBuildPackageLocation="$(build.artifactStagingDirectory)\WebApp.zip" /p:DeployIisAppPath="Default Web Site"'
+    platform: '$(buildPlatform)'
+    configuration: '$(buildConfiguration)'
+- task: PublishBuildArtifacts@1
+
+- task: ArchiveFiles@2
+  inputs:
+    rootFolderOrFile: '$(Build.BinariesDirectory)'
+    includeRootFolder: false
+    archiveType: 'zip'
+    archiveFile: '$(System.DefaultWorkingDirectory)/$(Build.BuildId).zip'
+    replaceExistingArchive: true
+- task: VSTest@2
+  inputs:
+    platform: '$(buildPlatform)'
+    configuration: '$(buildConfiguration)'
+
+# ASP.NET Core (.NET Framework)
+
+- task: AzureWebApp@1
+  inputs:
+    azureSubscription: 'Free Trial(3f6db5d9-fa18-4e79-9225-549d02c19a5b)'
+    appType: 'webApp'
+    appName: 'jan2024auth'
+    package: '$(System.DefaultWorkingDirectory)/**/*.zip'
+    deploymentMethod: auto
