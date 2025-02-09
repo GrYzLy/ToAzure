@@ -27,6 +27,20 @@ steps:
     arguments: '--configuration $(buildConfiguration)'
 
 - task: DotNetCoreCLI@2
+  displayName: 'dotnet test - unit tests'
+  inputs:
+    command: 'test'
+    arguments: '--configuration $(buildConfiguration) --no-build --no-restore --logger trx --collect "Code coverage"'
+    projects: '**/*.UnitTests.csproj'
+
+- task: DotNetCoreCLI@2
+  displayName: 'dotnet test - integration tests'
+  inputs:
+    command: 'test'
+    arguments: '--configuration $(buildConfiguration) --no-build --no-restore --logger trx --collect "Code coverage"'
+    projects: '**/*.IntegrationTests.csproj'
+
+- task: DotNetCoreCLI@2
   displayName: 'Publish project'
   inputs:
     command: 'publish'
