@@ -4,43 +4,59 @@ trigger:
 pool: my-personal-computer
 
 variables:
-  solution: '**/*.sln'
-  buildPlatform: 'Any CPU'
   buildConfiguration: 'Release'
 
 steps:
-- task: NuGetToolInstaller@1
-
-- task: NuGetCommand@2
+- task: UseDotNet@2
   inputs:
-    restoreSolution: '$(solution)'
+    packageType: 'sdk'
+    version: '8.x'  # Update to match your .NET version
+    installationPath: $(Agent.ToolsDirectory)/dotnet
 
-- task: VSBuild@1
+- task: DotNetCoreCLI@2
+  displayName: 'Restore dependencies'
   inputs:
-    solution: '$(solution)'
-    msbuildArgs: '/p:DeployOnBuild=true /p:WebPublishMethod=Package /p:PackageAsSingleFile=true /p:SkipInvalidConfigurations=true /p:DesktopBuildPackageLocation="$(build.artifactStagingDirectory)\WebApp.zip" /p:DeployIisAppPath="Default Web Site"'
-    platform: '$(buildPlatform)'
-    configuration: '$(buildConfiguration)'
+    command: 'restore'
+    projects: '**/*.csproj'
+
+- task: DotNetCoreCLI@2
+  displayName: 'Build project'
+  inputs:
+    command: 'build'
+    projects: '**/*.csproj'
+    arguments: '--configuration $(buildConfiguration)'
+
+- task: DotNetCoreCLI@2
+  displayName: 'dotnet test - unit tests'
+  inputs:
+    command: 'test'
+    arguments: '--configuration $(buildConfiguration) --no-build --no-restore --logger trx --collect "Code coverage"'
+    projects: '**/*.UnitTests.csproj'
+
+- task: DotNetCoreCLI@2
+  displayName: 'dotnet test - integration tests'
+  inputs:
+    command: 'test'
+    arguments: '--configuration $(buildConfiguration) --no-build --no-restore --logger trx --collect "Code coverage"'
+    projects: '**/*.IntegrationTests.csproj'
+
+- task: DotNetCoreCLI@2
+  displayName: 'Publish project'
+  inputs:
+    command: 'publish'
+    projects: '**/*.csproj'
+    arguments: '--configuration $(buildConfiguration) --output $(Build.ArtifactStagingDirectory)'
+
 - task: PublishBuildArtifacts@1
-
-- task: ArchiveFiles@2
+  displayName: 'Publish Artifact'
   inputs:
-    rootFolderOrFile: '$(Build.BinariesDirectory)'
-    includeRootFolder: false
-    archiveType: 'zip'
-    archiveFile: '$(System.DefaultWorkingDirectory)/$(Build.BuildId).zip'
-    replaceExistingArchive: true
-- task: VSTest@2
-  inputs:
-    platform: '$(buildPlatform)'
-    configuration: '$(buildConfiguration)'
-
-# ASP.NET Core (.NET Framework)
+    pathToPublish: '$(Build.ArtifactStagingDirectory)'
+    artifactName: 'drop'
 
 - task: AzureWebApp@1
   inputs:
     azureSubscription: 'Free Trial(3f6db5d9-fa18-4e79-9225-549d02c19a5b)'
     appType: 'webApp'
     appName: 'jan2024auth'
-    package: '$(System.DefaultWorkingDirectory)/**/*.zip'
+    package: '$(Build.ArtifactStagingDirectory)/**/*.zip'
     deploymentMethod: auto
